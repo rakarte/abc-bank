@@ -10,9 +10,13 @@ public class Bank {
         customers = new ArrayList<Customer>();
     }
 
-    public void addCustomer(Customer customer) {
-        customers.add(customer);
-    }
+	public void addCustomer(Customer customer) {
+		// prevent multi-threaded bank clients from adding duplicate customer IDs
+		synchronized (customers) {
+			if (!customers.contains(customer))
+				customers.add(customer);
+		}
+	}
 
     public String customerSummary() {
         String summary = "Customer Summary";

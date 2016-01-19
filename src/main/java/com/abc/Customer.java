@@ -17,6 +17,15 @@ public class Customer {
     public String getName() {
         return name;
     }
+    
+    // assuming customer name is the unique identifier 
+    public boolean equals(Customer c) {
+    	return (this.name.equalsIgnoreCase(c.name)) ? true : false;
+    }
+    
+    public int hashCode() {
+    	return (this.name.length());
+    }
 
     public Customer openAccount(Account account) {
         accounts.add(account);
@@ -46,18 +55,30 @@ public class Customer {
         return statement;
     }
 
+	public double transfer(Account from, Account to, double amount) {
+		synchronized (this) {
+			return from.transfer(to, amount);
+		}
+	}
+	
+	public void withdrwa(Account from, double amount) {
+		synchronized (this) {
+			from.withdraw(amount);
+		}
+	}	
+    
     private String statementForAccount(Account a) {
         String s = "";
 
        //Translate to pretty account type
         switch(a.getAccountType()){
-            case Account.CHECKING:
+            case CHECKING:
                 s += "Checking Account\n";
                 break;
-            case Account.SAVINGS:
+            case SAVINGS:
                 s += "Savings Account\n";
                 break;
-            case Account.MAXI_SAVINGS:
+            case MAXI_SAVINGS:
                 s += "Maxi Savings Account\n";
                 break;
         }

@@ -1,73 +1,110 @@
 package com.abc;
 
+import java.time.Duration;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 public class Account {
 
-    public static final int CHECKING = 0;
-    public static final int SAVINGS = 1;
-    public static final int MAXI_SAVINGS = 2;
+	public enum AccountType {
+		CHECKING, SAVINGS, MAXI_SAVINGS
+	};
 
-    private final int accountType;
-    public List<Transaction> transactions;
+	private final AccountType accountType;
+	public List<Transaction> transactions;
+	private LocalDate acctOpenDate = null;
+	private LocalDate withdrawalDate = null;
 
-    public Account(int accountType) {
-        this.accountType = accountType;
-        this.transactions = new ArrayList<Transaction>();
-    }
+	public LocalDate getAcctOpenDate() {
+		return acctOpenDate;
+	}
 
-    public void deposit(double amount) {
-        if (amount <= 0) {
-            throw new IllegalArgumentException("amount must be greater than zero");
-        } else {
-            transactions.add(new Transaction(amount));
-        }
-    }
+	public LocalDate getWithdrawalDate() {
+		return withdrawalDate;
+	}
 
-public void withdraw(double amount) {
-    if (amount <= 0) {
-        throw new IllegalArgumentException("amount must be greater than zero");
-    } else {
-        transactions.add(new Transaction(-amount));
-    }
-}
+	public void setWithdrawalDate(LocalDate withdrawalDate) {
+		this.withdrawalDate = withdrawalDate;
+	}
 
-    public double interestEarned() {
+	public Account(AccountType accountType) {
+		this.accountType = accountType;
+		this.acctOpenDate = LocalDate.now().minusDays(36);
+		this.transactions = new ArrayList<Transaction>();
+	}
+
+	public void deposit(double amount) {
+		if (amount <= 0) {
+			throw new IllegalArgumentException("amount must be greater than zero");
+		} else {
+			transactions.add(new Transaction(amount));
+		}
+	}
+
+	public void withdraw(double amount) {
+		if (amount <= 0) {
+			throw new IllegalArgumentException("amount must be greater than zero");
+		} else {
+			transactions.add(new Transaction(-amount));
+			setWithdrawalDate(LocalDate.now().minusDays(12));
+		}
+	}
+
+	/*
+	 * @param numOfDays - number of days for which account was held
+	 * 
+	 * @param daysSinceLastWithdrawal - days since last withdrawal for
+	 * maxi-savings
+	 */
+	public double interestEarned() {
+		long numOfDays = Duration.between(getAcctOpenDate().atTime(0, 0), LocalDate.now().atTime(0, 0)).toDays();
+		if (getWithdrawalDate() == null)
+			setWithdrawalDate(getAcctOpenDate());
+		long daysSinceLastWithdrawal = Duration.between(getWithdrawalDate().atTime(0, 0), LocalDate.now().atTime(0, 0))
+				.toDays();
         double amount = sumTransactions();
-        switch(accountType){
-            case SAVINGS:
-                if (amount <= 1000)
-                    return amount * 0.001;
-                else
-                    return 1 + (amount-1000) * 0.002;
-//            case SUPER_SAVINGS:
-//                if (amount <= 4000)
-//                    return 20;
-            case MAXI_SAVINGS:
-                if (amount <= 1000)
-                    return amount * 0.02;
-                if (amount <= 2000)
-                    return 20 + (amount-1000) * 0.05;
-                return 70 + (amount-2000) * 0.1;
-            default:
-                return amount * 0.001;
-        }
+		switch (accountType) {
+		case CHECKING:
+			return amount * 0.001 * numOfDays / 365;
+		case SAVINGS:
+			if (amount > 1000)
+				return (1000 * .001 + (amount - 1000) * .002) * numOfDays / 365;
+			else
+				return (amount * .001 * numOfDays / 365);
+		case MAXI_SAVINGS:
+			if (daysSinceLastWithdrawal > 10)
+				return amount * 0.05 * numOfDays / 365;
+			else
+				return amount * 0.001 * numOfDays / 365;
+		default:
+			return amount * 0.001;
+		}
     }
 
-    public double sumTransactions() {
-       return checkIfTransactionsExist(true);
-    }
+	public double transfer(Account to, double amount) {
 
-    private double checkIfTransactionsExist(boolean checkAll) {
-        double amount = 0.0;
-        for (Transaction t: transactions)
-            amount += t.amount;
-        return amount;
-    }
+		if (sumTransactions() >= amount) {
+			this.withdraw(amount);
+			to.deposit(amount);
+		}
+		return sumTransactions();
+	}
 
-    public int getAccountType() {
-        return accountType;
-    }
+	public double sumTransactions() {
+		return checkIfTransactionsExist(true);
+	}
+
+	private double checkIfTransactionsExist(boolean checkAll) {
+		double amount = 0.0;
+		for (Transaction t : transactions)
+			amount += t.amount;
+		return amount;
+	}
+
+	public AccountType getAccountType() {
+		return accountType;
+	}
 
 }
