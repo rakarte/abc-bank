@@ -29,6 +29,8 @@ public class Account {
 		this.withdrawalDate = withdrawalDate;
 	}
 
+	// minusDays(36) was added to show interest rate calculations
+	// In production, acctOpenDate date will be set to LocalDate.now()
 	public Account(AccountType accountType) {
 		this.accountType = accountType;
 		this.acctOpenDate = LocalDate.now().minusDays(36);
@@ -43,6 +45,8 @@ public class Account {
 		}
 	}
 
+	// minusDays(12) was added to show interest rate calculations
+	// In production, withdrawalDate will be set to LocalDate.now()
 	public void withdraw(double amount) {
 		if (amount <= 0) {
 			throw new IllegalArgumentException("amount must be greater than zero");
